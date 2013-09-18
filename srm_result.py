@@ -3,6 +3,8 @@
 
 import sys
 import urllib2
+import os
+import time
 
 from xml.dom.minidom import parseString
 
@@ -25,7 +27,18 @@ srm = argv[2] if argc > 2 else ''
 
 # print name
 
-f = urllib2.urlopen("http://www.topcoder.com/tc?module=BasicData&c=dd_round_list")
+roundListUrl = 'http://www.topcoder.com/tc?module=BasicData&c=dd_round_list'
+cacheFile = os.sep.join([os.environ['HOME'], '.topcoder', 'dd_round_list.xml'])
+
+# -f つけたら強制的に取得してくる実装にしたい
+if not os.path.exists(cacheFile) or time.time() - os.stat(cacheFile).st_mtime > 7 * 24 * 60 * 60:
+	f = urllib2.urlopen(roundListUrl)
+	cfile = open(cacheFile, 'w')
+	cfile.write(f.read())
+	cfile.close()
+
+f = open(cacheFile, 'r')
+
 dom = parseString(f.read())
 roundId = ''
 roundName = ''
@@ -44,25 +57,32 @@ if roundId == '':
 	print 'invalid srm number'
 	quit()
 
-roundDataUrl = 'http://www.topcoder.com/tc?module=BasicData&c=dd_round_results&rd='+roundId 
-
 # print roundDataUrl
 
-f = urllib2.urlopen(roundDataUrl)
+roundDataUrl = 'http://www.topcoder.com/tc?module=BasicData&c=dd_round_results&rd='+roundId 
+roundResultFilename = 'dd_round_result.' + roundId + '.xml'
+cacheFile = os.sep.join([os.environ['HOME'], '.topcoder', roundResultFilename])
+
+if not os.path.exists(cacheFile):
+	f = urllib2.urlopen(roundDataUrl)
+	cfile = open(cacheFile, 'w')
+	cfile.write(f.read())
+	cfile.close()
+
+f = open(cacheFile, 'r')
 dom = parseString(f.read())
 
 for row in dom.getElementsByTagName('row'):
 	handle = getData(row, 'handle')
 	if handle == name:
-		print name, roundName
+		print roundName,
 		print ox(getData(row, 'level_one_status')),
 		print ox(getData(row, 'level_two_status')),
 		print ox(getData(row, 'level_three_status')),
 		print getData(row, 'challenge_points'),'=',
 		print getData(row, 'final_points'),'pts',
-		print 
 		print getData(row,'old_rating'),
 		print '->',
 		print getData(row, 'new_rating'),
 		print 
-		break
+		sys.exit(0)
