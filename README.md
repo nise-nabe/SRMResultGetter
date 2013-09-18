@@ -1,6 +1,14 @@
 SRMResultGetter
 ===============
 
+## Prepare
+
+make directory ~/.topcoder
+
+```
+$ mkdir ~/.topcoder
+```
+
 ## Usage
 
 ```
